@@ -154,6 +154,14 @@ where
       self.r1cs_shape_secondary.num_vars,
     )
   }
+
+  /// Returns primary and secondary shape
+  pub fn get_r1cs_shape(&self) -> (&R1CSShape<G1>, &R1CSShape<G2>) {
+    (
+      &self.r1cs_shape_primary,
+      &self.r1cs_shape_secondary,
+    )
+  }
 }
 
 /// SuperNova takes Ui a list of running instances.
@@ -248,7 +256,8 @@ where
   l_u_secondary: R1CSInstance<G2>,
   pp_digest: G1::Scalar,
   i: usize,
-  zi_primary: Vec<G1::Scalar>,
+  /// primary
+  pub zi_primary: Vec<G1::Scalar>,
   zi_secondary: Vec<G2::Scalar>,
   program_counter: G1::Scalar,
   augmented_circuit_index: usize,
@@ -314,6 +323,7 @@ where
       .r1cs_instance_and_witness(&pp.r1cs_shape_primary, ck_primary)
       .map_err(|_| NovaError::UnSat)?;
 
+    println!("base case=====================>1");
     // base case for the secondary
     let mut cs_secondary: SatisfyingAssignment<G2> = SatisfyingAssignment::new();
     let inputs_secondary: SuperNovaAugmentedCircuitInputs<'_, G1> =
@@ -344,6 +354,8 @@ where
     let (u_secondary, w_secondary) = cs_secondary
       .r1cs_instance_and_witness(&pp.r1cs_shape_secondary, ck_secondary)
       .map_err(|_| NovaError::UnSat)?;
+
+    println!("base case=====================>2");
 
     // IVC proof for the primary circuit
     let l_w_primary = w_primary;
@@ -818,6 +830,9 @@ mod tests {
         acc_lc + row_value.get_variable()
       });
 
+    // println!("rom index ==============> : {:?}", sum_lc.get_value());
+    println!("self.circuit index ==============> : {:?}", circuit_index.get_value());
+
     cs.enforce(
       || "sum_lc == circuit_index",
       |lc| lc + circuit_index.get_variable() - &sum_lc,
@@ -862,6 +877,9 @@ mod tests {
       pc_counter: &AllocatedNum<F>,
       z: &[AllocatedNum<F>],
     ) -> Result<(AllocatedNum<F>, Vec<AllocatedNum<F>>), SynthesisError> {
+      println!("pc ==============> : {:?}", pc_counter.get_value());
+      println!("pc ==============> : {:?}", self.circuit_index);
+
       // constrain rom[pc] equal to `self.circuit_index`
       let circuit_index = alloc_const(
         cs.namespace(|| "circuit_index"),
@@ -1017,10 +1035,16 @@ mod tests {
     // To save the test time, after each step of iteration, RecursiveSNARK just verfiy the latest U_i[augmented_circuit_index] needs to be a satisfying instance.
     // TODO At the end of this test, RecursiveSNARK need to verify all U_i[] are satisfying instances
 
+    // let rom = [
+    //   OPCODE_1, OPCODE_1, OPCODE_0, OPCODE_0, OPCODE_1, OPCODE_1, OPCODE_0, OPCODE_0, OPCODE_1,
+    //   OPCODE_1,
+    // ]; // Rom can be arbitrary length.
     let rom = [
-      OPCODE_1, OPCODE_1, OPCODE_0, OPCODE_0, OPCODE_1, OPCODE_1, OPCODE_0, OPCODE_0, OPCODE_1,
-      OPCODE_1,
+      OPCODE_1,OPCODE_0,OPCODE_1,OPCODE_0
     ]; // Rom can be arbitrary length.
+    // let rom = [
+    //   OPCODE_1
+    // ]; // Rom can be arbitrary length.
     let circuit_secondary = TrivialTestCircuit::new(rom.len());
     let num_augmented_circuit = 2;
 

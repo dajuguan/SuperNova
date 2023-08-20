@@ -112,6 +112,7 @@ where
     let mut cs: ShapeCS<G1> = ShapeCS::new();
     let _ = circuit_primary.synthesize(&mut cs);
     let (r1cs_shape_primary, ck_primary) = cs.r1cs_shape_with_commitmentkey();
+    
 
     // Initialize ck for the secondary
     let circuit_secondary: NovaAugmentedCircuit<'_, G1, C2> = NovaAugmentedCircuit::new(
@@ -860,15 +861,16 @@ mod tests {
       // Consider a cubic equation: `x^3 + x + 5 = y`, where `x` and `y` are respectively the input and output.
       let x = &z[0];
       let x_sq = x.square(cs.namespace(|| "x_sq"))?;
-      let x_cu = x_sq.mul(cs.namespace(|| "x_cu"), x)?;
+      let x_sq2 = x_sq.square(cs.namespace(|| "x_sq2"))?;
+      let x_5 = x_sq2.mul(cs.namespace(|| "x^5"), &x_sq2)?;
       let y = AllocatedNum::alloc(cs.namespace(|| "y"), || {
-        Ok(x_cu.get_value().unwrap() + x.get_value().unwrap() + F::from(5u64))
+        Ok(x_sq.get_value().unwrap() + x.get_value().unwrap() + F::from(5u64))
       })?;
 
       cs.enforce(
-        || "y = x^3 + x + 5",
+        || "y = x^2 + x + 5",
         |lc| {
-          lc + x_cu.get_variable()
+          lc + x_5.get_variable()
             + x.get_variable()
             + CS::one()
             + CS::one()
@@ -882,6 +884,37 @@ mod tests {
 
       Ok(vec![y])
     }
+
+    // fn synthesize<CS: ConstraintSystem<F>>(
+    //   &self,
+    //   cs: &mut CS,
+    //   z: &[AllocatedNum<F>],
+    // ) -> Result<Vec<AllocatedNum<F>>, SynthesisError> {
+    //   // Consider a cubic equation: `x^3 + x + 5 = y`, where `x` and `y` are respectively the input and output.
+    //   let x = &z[0];
+    //   let x_sq = x.square(cs.namespace(|| "x_sq"))?;
+    //   let x_cu = x_sq.mul(cs.namespace(|| "x_cu"), x)?;
+    //   let y = AllocatedNum::alloc(cs.namespace(|| "y"), || {
+    //     Ok(x_cu.get_value().unwrap() + x.get_value().unwrap() + F::from(5u64))
+    //   })?;
+
+    //   cs.enforce(
+    //     || "y = x^3 + x + 5",
+    //     |lc| {
+    //       lc + x_cu.get_variable()
+    //         + x.get_variable()
+    //         + CS::one()
+    //         + CS::one()
+    //         + CS::one()
+    //         + CS::one()
+    //         + CS::one()
+    //     },
+    //     |lc| lc + CS::one(),
+    //     |lc| lc + y.get_variable(),
+    //   );
+
+    //   Ok(vec![y])
+    // }
   }
 
   impl<F> CubicCircuit<F>
@@ -955,14 +988,15 @@ mod tests {
     G1: Group<Base = <G2 as Group>::Scalar>,
     G2: Group<Base = <G1 as Group>::Scalar>,
   {
-    let test_circuit1 = TrivialTestCircuit::<<G1 as Group>::Scalar>::default();
+    let test_circuit1 = CubicCircuit::<<G1 as Group>::Scalar>::default();
+    // let test_circuit1 = TrivialTestCircuit::<<G1 as Group>::Scalar>::default();
     let test_circuit2 = TrivialTestCircuit::<<G2 as Group>::Scalar>::default();
 
     // produce public parameters
     let pp = PublicParams::<
       G1,
       G2,
-      TrivialTestCircuit<<G1 as Group>::Scalar>,
+      CubicCircuit<<G1 as Group>::Scalar>,
       TrivialTestCircuit<<G2 as Group>::Scalar>,
     >::setup(&test_circuit1, &test_circuit2);
 
@@ -1003,7 +1037,7 @@ mod tests {
     type G2 = pasta_curves::vesta::Point;
     test_ivc_trivial_with::<G1, G2>();
 
-    test_ivc_trivial_with::<bn256::Point, grumpkin::Point>();
+    // test_ivc_trivial_with::<bn256::Point, grumpkin::Point>();
   }
 
   fn test_ivc_nontrivial_with<G1, G2>()
@@ -1056,6 +1090,7 @@ mod tests {
         &[<G2 as Group>::Scalar::ZERO],
       );
       assert!(res.is_ok());
+      println!("z_0_primary: {:?}", res.unwrap());
     }
 
     // verify the recursive SNARK

@@ -21,6 +21,8 @@ struct AddCircuit<F:PrimeField> {
     rom_size: usize
 }
 
+
+// circuit: y = x + 1
 impl<F> AddCircuit<F>
 where F:PrimeField
 {
@@ -100,6 +102,7 @@ where F:PrimeField
 }
 
 
+// circuit: y = x^2
 #[derive(Clone, Debug, Default)]
 struct Add2Circuit<F:PrimeField> {
     _p: PhantomData<F>,
@@ -180,7 +183,7 @@ where F:PrimeField
           &one,
         )?;
         
-        let mut z_next = vec![y];
+        let mut z_next = vec![y_square];
         z_next.extend(z[1..].iter().cloned());
         Ok((pc_next, z_next))
     }

@@ -281,7 +281,7 @@ fn main() {
 
     // println!("recursive snark===========> {:?}", recursive_snark);
     
-    for _ in 1..rom_size{
+    for _ in 1..=rom_size{
         let pc = recursive_snark.get_program_counter();
         let augument_circuit_index = rom[u32::from_le_bytes(
             pc.to_repr().as_ref()[0..4].try_into().unwrap()
@@ -313,4 +313,5 @@ fn main() {
         ..
     } = recursive_snark;
     println!(" zi_primary is ===========> {:?}", zi_primary);
+    assert!(zi_primary[0] == <G1 as Group>::Scalar::from(16));
 }

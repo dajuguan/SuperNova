@@ -274,40 +274,40 @@ fn main() {
         num_augmented_circuit,
         &z0_primary,
         &z0_secondary,
-        );
+        ).unwrap();
 
-    println!("recursive snark===========> {:?}", recursive_snark);
+    // println!("recursive snark===========> {:?}", recursive_snark);
     
-    // for _ in 1..rom_size{
-    //     let pc = recursive_snark.get_program_counter();
-    //     let augument_circuit_index = rom[u32::from_le_bytes(
-    //         pc.to_repr().as_ref()[0..4].try_into().unwrap()
-    //     ) as usize];
+    for _ in 1..rom_size{
+        let pc = recursive_snark.get_program_counter();
+        let augument_circuit_index = rom[u32::from_le_bytes(
+            pc.to_repr().as_ref()[0..4].try_into().unwrap()
+        ) as usize];
 
-    //     match augument_circuit_index {
-    //         OPCODE_0 => {
-    //             recursive_snark
-    //             .prove_step(&running_claim_1, &z0_primary, &z0_secondary)
-    //             .unwrap();
-    //             recursive_snark
-    //             .verify(&running_claim_1, &z0_primary, &z0_secondary)
-    //             .unwrap();
-    //         },
-    //         OPCODE_1 => {
-    //             recursive_snark
-    //             .prove_step(&running_claim_2, &z0_primary, &z0_secondary)
-    //             .unwrap();
-    //             recursive_snark
-    //             .verify(&running_claim_2, &z0_primary, &z0_secondary)
-    //             .unwrap();
-    //         },
-    //         _ => unimplemented!()
-    //     }
-    // }
+        match augument_circuit_index {
+            OPCODE_0 => {
+                recursive_snark
+                .prove_step(&running_claim_1, &z0_primary, &z0_secondary)
+                .unwrap();
+                recursive_snark
+                .verify(&running_claim_1, &z0_primary, &z0_secondary)
+                .unwrap();
+            },
+            OPCODE_1 => {
+                recursive_snark
+                .prove_step(&running_claim_2, &z0_primary, &z0_secondary)
+                .unwrap();
+                recursive_snark
+                .verify(&running_claim_2, &z0_primary, &z0_secondary)
+                .unwrap();
+            },
+            _ => unimplemented!()
+        }
+    }
 
-    // let RecursiveSNARK {
-    //     zi_primary,
-    //     ..
-    // } = recursive_snark;
-    // println!(" zi_primary is ===========> {:?}", zi_primary);
+    let RecursiveSNARK {
+        zi_primary,
+        ..
+    } = recursive_snark;
+    println!(" zi_primary is ===========> {:?}", zi_primary);
 }
